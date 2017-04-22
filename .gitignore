@@ -1,6 +1,8 @@
 .idea/
 process/migrations/
 traffic_prediction/__pycache__/
+process/13301104001.CSV
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
