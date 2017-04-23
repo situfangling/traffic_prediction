@@ -2,8 +2,10 @@
 process/migrations/
 traffic_prediction/__pycache__/
 process/13301104001.CSV
+process/destination.CSV
 data/
 static/
+db.sqlite3
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
