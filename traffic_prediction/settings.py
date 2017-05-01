@@ -12,10 +12,22 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from os.path import normpath,join
+import djcelery
+
+
+BROKER_URL = 'django://localhost:8000//'
+
+
+# Django settings
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'traffic_prediction.settings')
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+## 这里BASE_DIR就是traffic_prediction的根目录，没有后边的一杠
+## D:\traffic_project\traffic_prediction
+## Mac或Ubuntu下路径会显示正斜杠/,Windows下路径会显示反斜杠\。为了保证该项目在不同系统下均可运行，
+## 在views.py中使用os.path.replace函数将所有反斜杠替换成正斜杠
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -27,6 +39,13 @@ SECRET_KEY = '#4iprad$%&f#j-@!gwaf%j2j0myi!g44l-ckbk**%8rv*8f)d4'
 DEBUG = True
 
 ALLOWED_HOSTS = []
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+STATIC_URL = '/static/'
+STATIC_ROOT = normpath(join(BASE_DIR,  'static', 'root'))
+STATICFILES_DIRS = (
+    normpath(join(BASE_DIR, 'static')),
+)
 
 
 # Application definition
@@ -39,6 +58,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'process',
+    'djcelery',
+    'kombu.transport.django',
 )
 
 MIDDLEWARE_CLASSES = (
