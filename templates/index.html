@@ -19,7 +19,14 @@
             width:          100%;
             height:         93%;
         }
+        #queryTime{
+            float: left;
+            padding-left: 200px;
+            padding-top: 15px;
+        }
 	</style>
+    <script type="text/javascript" src="../static/js/jquery.min.js" charset="UTF-8"></script>
+    <!--引用百度地图相关文件-->
 	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=eM0GfCwd27kZRyM49ZOkvkOaidDXz6Wf"></script>
     <!--加载鼠标绘制工具-->
 	<script type="text/javascript" src="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.js"></script>
@@ -27,14 +34,31 @@
 	<!--加载检索信息窗口-->
 	<script type="text/javascript" src="http://api.map.baidu.com/library/SearchInfoWindow/1.4/src/SearchInfoWindow_min.js"></script>
 	<link rel="stylesheet" href="http://api.map.baidu.com/library/SearchInfoWindow/1.4/src/SearchInfoWindow_min.css" />
+     <!--引用bootstrap和flat-ui样式及js文件-->
+    <link rel="stylesheet" href="../static/css/bootstrap.css">
+    <link rel="stylesheet" href="../static/css/flat-ui.css">
+    <link rel="stylesheet" href="../static/css/bootstrap-datetimepicker.css">
+    <script type="text/javascript" src="../static/js/bootstrap.js"></script>
+    <script type="text/javascript" src="../static/js/flat-ui.js"></script>
+    <script type="text/javascript" src="../static/js/bootstrap-datetimepicker.js"></script>
+    <script type="text/javascript" src="../static/js/bootstrap-datetimepicker.zh-CN.js"  ></script>
+    <!--加载区域边界数据信息-->
+    <script type="text/javascript" src="../static/js/data.js"></script>
 	<title>地图展示</title>
 </head>
 
 <body>
-    <div id="head"></div>
+    <div id="head">
+        <form class="form-inline" id="queryTime">
+            <label>时间:</label>
+            <input type="text" class="form-control form-date input-sm" value="2017-02-1 1:00:00" style="width: 180px;"  id="datetimepicker" data-date-format="yyyy-mm-dd hh:ii:ss">
+            <button class="btn btn-primary btn-sm" onclick="queryTime()">查询</button>
+        </form>
+    </div>
     <div id="allmap"></div>
 </body>
 <script type="text/javascript">
+
 	// 百度地图API功能
 	var map = new BMap.Map("allmap");    // 创建Map实例
 	map.centerAndZoom(new BMap.Point(116.404, 39.915), 11);  // 初始化地图,设置中心点坐标和地图级别
@@ -67,8 +91,100 @@
         polygonOptions: styleOptions, //多边形的样式
         rectangleOptions: styleOptions //矩形的样式
     });
-	 //添加鼠标绘制工具监听事件，用于获取绘制结果
-    drawingManager.addEventListener('overlaycomplete', overlaycomplete);
+    //添加鼠标绘制工具监听事件，用于获取绘制结果
+    //drawingManager.addEventListener('overlaycomplete', overlaycomplete);
+
+    //设置时间选择器
+    $('#datetimepicker').datetimepicker({
+        format: 'yyyy-mm-dd hh:ii:ss',
+        language:'zh-CN',
+        autoclose:1,
+        minuteStep:10
+    });
+
+    var district_ids = new Array();
+    {% for district_id in district_ids %}
+        district_ids.push({{ district_id }});
+    {% endfor %}
+
+    var region_colors = new Array();
+    function get_region_color(region_id)
+    {
+        return region_colors[region_id];
+    }
+    var region_labels = new Array();
+    function get_region_label(region_id)
+    {
+        return region_labels[region_id];
+    }
+
+    //点击查询按钮进行查询事件
+    function queryTime() {
+        //新建一个变量保存当前选择的时间
+        var dateNow = $("#datetimepicker").val();
+        alert(dateNow);
+        //???
+        $.ajaxSetup({
+            dataType: "json",
+            beforeSend: function (xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+            },
+        });
+        $.ajax({
+            type: "POST",
+            url: "{% url 'process:query_status' %}",
+            data: {"query_dt":dateNow},
+            success: function (result) {
+                if (result["code"] == 0) {
+                    for(i=0;i<district_ids.length;i++)
+                    {
+                        var district_id = district_ids[i];
+                        region_labels[district_id] = result["des"+district_id];
+                        region_colors[district_id] = result[district_id];
+                    }
+                    redraw();
+            }
+            else {
+                alert(result.message);
+            }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.table([{
+                    "错误类型": jqXHR,
+                    "错误信息": textStatus,
+                    "http状态": errorThrown
+                }])
+            }
+        });
+    }
+
+    //重新绘制覆盖物
+    function redraw() {
+        map.clearOverlays();
+
+        for ( var region_id in data ){
+            var points = [];  // 添加海量点数据
+
+            for (var i = 0; i < data[region_id].length; i++) {
+                    points.push(new BMap.Point(data[region_id][i][0], data[region_id][i][1]));
+            }
+            var geo_center_point = new BMap.Point(geocenter[region_id][0],geocenter[region_id][1]);
+            var marker = new BMap.Marker(geo_center_point);  // 创建标注
+            map.addOverlay(marker);              // 将标注添加到地图中
+
+            var label = new BMap.Label(get_region_label(region_id),{position :geo_center_point,offset   : new BMap.Size(20, -10)});
+            label.setStyle({
+                 color : "white",
+                 fontSize : "12px",
+                 border :"0",
+                 backgroundColor :"0.0"
+            });
+            marker.setLabel(label);
+            var polygon = new BMap.Polygon(points, { strokeColor:"#FFFFFF",fillColor:gradient[get_region_color(region_id)], strokeWeight:1, strokeOpacity:0.5});  // 初始化PointCollection
+            map.addOverlay(polygon);
+        }
+    }
+
 </script>
 
 </html>
