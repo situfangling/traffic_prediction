@@ -4,4 +4,6 @@ from process.views import *
 
 urlpatterns = patterns('process.views',
  url(r'^index$','index',name='index'),
+ url(r'^data_preprocess$','data_preprocess',name='data_preprocess'),
+ url(r'^query_status$','query_status',name='query_status'),
 )

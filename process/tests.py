@@ -13,6 +13,10 @@ print(file_path)'''
 from multiprocessing import Process
 import os
 
+
+'''
+=======
+>>>>>>> 7e861877356890cc879a1e3403b0b677e7c679ef
 # 子进程要执行的代码
 def run_proc(name):
     print('Run child process %s (%s)...' % (name, os.getpid()))
@@ -23,4 +27,17 @@ if __name__=='__main__':
     print('Child process will start.')
     p.start()
     p.join()
-    print('Child process end.')
+<<<<<<< HEAD
+    print('Child process end.') '''
+
+import datetime
+tz_utc_8 = datetime.timezone(datetime.timedelta(hours=8))
+
+'''utc_time = datetime.datetime(2017,4,1,0,0,0,tzinfo=tz_utc_8)
+utc_time_str = utc_time.strftime("%Y-%m-%d %H:%M:%S")
+print(utc_time_str)'''
+
+
+query_time_str = "2017-04-01 18:20:00"
+query_time_dt = datetime.datetime.strptime(query_time_str, "%Y-%m-%d %H:%M:%S")
+print(query_time_dt)

@@ -104,12 +104,16 @@ def process(path_pkl_path):
     path_pkl_file = open(path_pkl_path, "rb")
     roadset = pickle.load(path_pkl_file)
     path_pkl_file.close()
+    num = 0
     try:
         csv_list = data_file.readlines()  #read()函数读取一个完整的str，readlines函数按行读取，返回值为list
         # print(type(csv_list))  list
         for car_id, csv_name in enumerate(csv_list):
             csv_path = os.path.join(file_dir, csv_name.strip())   ##刚刚报错了，原因是路径末尾出现了\n符号，读取的csv_name末尾含有\n，需要调用strip函数去掉\n
             print(csv_path)
+            num += 1
+            if(num > 50):
+                break
             dbSingleFile(roadset, csv_path, car_id)
 
     finally:

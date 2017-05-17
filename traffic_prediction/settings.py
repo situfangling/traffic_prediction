@@ -16,7 +16,7 @@ from os.path import normpath,join
 import djcelery
 
 
-BROKER_URL = 'django://localhost:8000//'
+BROKER_URL = 'django://localhost:8040//' # 异步
 
 
 # Django settings
@@ -58,8 +58,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'process',
-    'djcelery',
-    'kombu.transport.django',
+    'djcelery', #异步相关的库，pip install django-celery
+    'kombu.transport.django', #异步相关的库
 )
 
 MIDDLEWARE_CLASSES = (
@@ -78,8 +78,7 @@ ROOT_URLCONF = 'traffic_prediction.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')]
-        ,
+        'DIRS': [os.path.join(BASE_DIR, 'templates').replace('\\', '/')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -92,6 +91,7 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'traffic_prediction.wsgi.application'
 
 
@@ -101,7 +101,7 @@ WSGI_APPLICATION = 'traffic_prediction.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'traffic_prediction',
+        'NAME': 'prediction_new',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
@@ -126,10 +126,9 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = True # 不想管时区问题的话，置为False即可
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
-STATIC_URL = '/static/'
