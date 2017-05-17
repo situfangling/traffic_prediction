@@ -106,9 +106,8 @@
     var gradient = new gradientColor('#00FF00','#FF0000',300);//设置区域颜色的渐变色
 
     var district_ids = new Array();
-    {% for district_id in district_ids %}
-        district_ids.push({{ district_id }});
-    {% endfor %}
+    for (district_id in district_ids)
+        district_ids.push( district_id );
 
     var region_colors = new Array();
     function get_region_color(region_id)
