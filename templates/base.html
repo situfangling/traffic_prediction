@@ -1,0 +1,152 @@
+{% load static from staticfiles %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<style type="text/css">
+	    body, html{
+            width:          100%;
+            height:         100%;
+            overflow:       hidden;
+            margin:         0;
+            font-family:    "微软雅黑";
+        }
+        #head{
+            width: 100%;
+            height: 7%;
+            margin-bottom: 20px;
+        }
+        #allmap{
+            width:100%;
+            height:93%;
+        }
+        #queryTime{
+            float: left;
+            padding-left: 200px;
+            padding-top: 15px;
+        }
+	</style>
+    <title>{% block title %}{% endblock %}</title>
+	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=eM0GfCwd27kZRyM49ZOkvkOaidDXz6Wf"></script>
+    <script type="text/javascript" src="{% static "js/jquery.min.js" %}" charset="UTF-8"></script>
+
+    <script type="text/javascript" src="{% static "js/jquery-confirm.min.js" %}" charset="UTF-8"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static "css/jquery-confirm.min.css" %}" />
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static "css/bootstrap.css" %}" />
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static "css/loaders.css" %}" />
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static "css/flat-ui.css" %}" />
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static "css/bootstrap-datetimepicker.css" %}" />
+    <script type="text/javascript" src="{% static "js/bootstrap.js" %}" ></script>
+    <script type="text/javascript" src="{% static "js/flat-ui.js" %}" ></script>
+    <script src="{% static "js/html5shiv.js" %}"></script>
+    <script src="{% static "js/respond.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/loaders.css.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/bootstrap-datetimepicker.js" %}" ></script>
+    <script type="text/javascript" src="{% static "js/bootstrap-datetimepicker.zh-CN.js" %}" ></script>
+    <script type="text/javascript">
+        function flash(text,time)
+        {
+            $("#loading_text").html(text);
+            $("#loading_div2").css('display','block');
+            if(time!=0)setTimeout(function(){
+                $("#loading_div2").css('display','none');
+            },time);
+        }
+
+        // 将hex表示方式转换为rgb表示方式(这里返回rgb数组模式)
+        function colorRgb(sColor){
+           var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+           var sColor = sColor.toLowerCase();
+           if(sColor && reg.test(sColor)){
+               if(sColor.length === 4){
+                   var sColorNew = "#";
+                   for(var i=1; i<4; i+=1){
+                       sColorNew += sColor.slice(i,i+1).concat(sColor.slice(i,i+1));
+                   }
+                   sColor = sColorNew;
+               }
+               //处理六位的颜色值
+               var sColorChange = [];
+               for(var i=1; i<7; i+=2){
+                   sColorChange.push(parseInt("0x"+sColor.slice(i,i+2)));
+               }
+               return sColorChange;
+           }else{
+               return sColor;
+           }
+       };
+        // 将rgb表示方式转换为hex表示方式
+        function colorHex(rgb){
+           var _this = rgb;
+           var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+           if(/^(rgb|RGB)/.test(_this)){
+               var aColor = _this.replace(/(?:(|)|rgb|RGB|\(|\))*/g,"").split(",");
+               var strHex = "#";
+               for(var i=0; i<aColor.length; i++){
+                   var hex = Number(aColor[i]).toString(16);
+                   hex = hex<10 ? 0+''+hex :hex;// 保证每个rgb的值为2位
+                   if(hex === "0"){
+                       hex += hex;
+                   }
+                   strHex += hex;
+               }
+               if(strHex.length !== 7){
+                   strHex = _this;
+               }
+               return strHex;
+           }else if(reg.test(_this)){
+               var aNum = _this.replace(/#/,"").split("");
+               if(aNum.length === 6){
+                   return _this;
+               }else if(aNum.length === 3){
+                   var numHex = "#";
+                   for(var i=0; i<aNum.length; i+=1){
+                       numHex += (aNum[i]+aNum[i]);
+                   }
+                   return numHex;
+               }
+           }else{
+               return _this;
+           }
+       }
+        function gradientColor(startColor,endColor,step) {
+            startRGB = colorRgb(startColor);//转换为rgb数组模式
+            startR = startRGB[0];
+            startG = startRGB[1];
+            startB = startRGB[2];
+
+            endRGB = colorRgb(endColor);
+            endR = endRGB[0];
+            endG = endRGB[1];
+            endB = endRGB[2];
+
+            sR = (endR - startR) / step;//总差值
+            sG = (endG - startG) / step;
+            sB = (endB - startB) / step;
+
+            var colorArr = [];
+            for (var i = 0; i < step; i++) {
+                //计算每一步的hex值
+                var hex = colorHex('rgb(' + parseInt((sR * i + startR)) + ',' + parseInt((sG * i + startG)) + ',' + parseInt((sB * i + startB)) + ')');
+                colorArr.push(hex);
+            }
+            return colorArr;
+        }
+    </script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    {% block content %}
+    {% endblock %}
+    <div id="loading_div" class="alert alert-default" style="background:#666666;width:100px;height:100px;text-align:center;padding-top:50px;position:fixed;left:50%;top:50%;display:none;margin-left:-55px;margin-top:-55px;">
+        <div class="loader-inner line-spin-fade-loader" style="margin-left:35px;background:#666666;">
+        </div>
+    </div>
+    <div id="loading_div2" class="alert alert-default" style="background:#666666;width:300px;height:50px;text-align:center;padding-top:15px;position:fixed;left:50%;top:50%;display:none;margin-left:-150px;margin-top:-25px;">
+        <div><label style="color:White;" id="loading_text"></label></div>
+    </div>
+</body>
+</html>
+{% block endscript %}
+{% endblock %}
