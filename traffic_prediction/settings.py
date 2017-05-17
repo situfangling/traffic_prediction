@@ -16,7 +16,11 @@ from os.path import normpath,join
 import djcelery
 
 
+<<<<<<< HEAD
 BROKER_URL = 'django://localhost:8040//' # 异步
+=======
+BROKER_URL = 'django://localhost:8000//'
+>>>>>>> 7e861877356890cc879a1e3403b0b677e7c679ef
 
 
 # Django settings
@@ -91,7 +95,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'prediction_new.wsgi.application'
+
+WSGI_APPLICATION = 'traffic_prediction.wsgi.application'
 
 
 # Database

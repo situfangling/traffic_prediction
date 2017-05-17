@@ -1,5 +1,5 @@
 from django.test import TestCase
-from prediction_new.settings import BASE_DIR
+from traffic_prediction.settings import BASE_DIR
 import os
 # Create your tests here.
 #print(BASE_DIR)
@@ -13,7 +13,10 @@ print(file_path)'''
 from multiprocessing import Process
 import os
 
+
 '''
+=======
+>>>>>>> 7e861877356890cc879a1e3403b0b677e7c679ef
 # 子进程要执行的代码
 def run_proc(name):
     print('Run child process %s (%s)...' % (name, os.getpid()))
@@ -24,6 +27,7 @@ if __name__=='__main__':
     print('Child process will start.')
     p.start()
     p.join()
+<<<<<<< HEAD
     print('Child process end.') '''
 
 import datetime
