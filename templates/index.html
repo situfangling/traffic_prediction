@@ -56,6 +56,61 @@
                 }
             });
         }
+
+        function handle_result_from_json(result) {
+
+        }
+
+        function select_an_area(now_overlay,points_list)
+        {
+            $.confirm({
+                confirmButtonClass: 'btn-info',
+                cancelButtonClass: 'btn-danger',
+
+                keyboardEnabled: true,
+                title: '信息',
+                content: '是否选择当前区域中的数据点?',
+                confirmButton: '是',
+                cancelButton: '否',
+                closeIcon: true,
+                confirm: function () {
+
+                    $.ajaxSetup({
+                        dataType: "json",
+                        beforeSend: function (xhr, settings) {
+                            xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                        },
+                    });
+
+                    var json_points = JSON.stringify(points_list);
+                    $.ajax({
+                        type: "POST",
+                        url: "{% url 'process:query_area' %}",
+                        data: {point_list: json_points},
+                        success: function (result) {
+                            if (result.code == 0) {
+                            handle_result_from_json(result);
+                        }
+                        else {
+                            alert(result.message);
+                        }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            console.table([{
+                                "错误类型": jqXHR,
+                                "错误信息": textStatus,
+                                "http状态": errorThrown
+                            }])
+                        }
+                    });
+                    map.removeOverlay(now_overlay);
+                },
+                cancel: function () {
+                    map.removeOverlay(now_overlay);
+                }
+            });
+        }
+
     </script>
 {% endblock %}
 {% block content %}
@@ -79,6 +134,7 @@
     map.addControl(top_left_control);
     map.addControl(top_left_navigation);
     map.enableKeyboard();
+
      var styleOptions = {
         strokeColor:"red",    //边线颜色。
         fillColor:"red",      //填充颜色。当参数为空时，圆形将没有填充效果。
@@ -100,8 +156,61 @@
         polygonOptions: styleOptions, //多边形的样式
         rectangleOptions: styleOptions //矩形的样式
     });
+    var overlaycomplete = function(e){
+        if (e.drawingMode=="polyline")//如果是画多边形结束后
+        {
+            var line_points = e.overlay.ia;
+            poly_start_point=line_points[0];
+            poly_end_point=line_points[line_points.length-1];
+            distance_of_st=distance(poly_start_point,poly_end_point);
+            threshold=0.0022;
+            if (distance_of_st <= threshold)
+            {
+
+                now_overlay= e.overlay;
+                select_an_area(now_overlay,line_points,modal_inner);
+            }
+            else {
+                $.confirm({
+                confirmButtonClass: 'btn-info',
+                cancelButtonClass: 'btn-default',
+
+                keyboardEnabled: true,
+                title: '警告',
+                content: '选择的区域起点和终点应相同,请重新绘制!',
+                confirmButton: '确定',
+                cancelButton: '取消',
+                closeIcon: true,
+                confirm: function () {
+                    map.removeOverlay(e.overlay);
+                },
+                cancel: function () {
+                    map.removeOverlay(e.overlay);
+                }
+            });
+            }
+        }
+        if (e.drawingMode=="rectangle") {//画矩形结束
+            var olRectPoint = e.overlay.getPath();
+            /* *.Nk是从 e 的dom节点中寻找到的，百度本身没有提供此方法的介绍。
+             * olRectPoint坐标排序方式
+             *	┌─────────────────────┐
+             *	│0					1 │
+             *	│					  │
+             *	│3					2 │
+             *	└─────────────────────┘
+             * */
+            var sw = olRectPoint[0];		//左上
+            var ne = olRectPoint[2];		//右下
+            //alert('左上：'+ sw.lng+',' + sw.lat + '    右下：'+ne.lng+','+ne.lat);
+            var line_points2=[sw,ne];
+            var now_overlay= e.overlay;
+            select_an_area(now_overlay,line_points2);
+        }
+    };
+
     //添加鼠标绘制工具监听事件，用于获取绘制结果
-    //drawingManager.addEventListener('overlaycomplete', overlaycomplete);
+    drawingManager.addEventListener('overlaycomplete', overlaycomplete);
     $('#datetimepicker').datetimepicker({
         language:'zh-CN',
         autoclose:1,
@@ -129,5 +238,6 @@
             map.addOverlay(polygon);
         }
     }
+
 </script>
 {% endblock %}
