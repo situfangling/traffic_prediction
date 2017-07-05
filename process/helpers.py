@@ -31,9 +31,8 @@ def ajax_required(func):
         else:
             raise ApiError("ONLY_FOR_AJAX")
     return __decorator
-def success_response(**response_dict):
-    response_dict["code"]=0
-    return JsonResponse(response_dict)
+def success_response(response=None):
+    return JsonResponse({"code": 0, "message": response})
 
 def get_json_template_from(file_path):
     fp=open(file_path,"r")

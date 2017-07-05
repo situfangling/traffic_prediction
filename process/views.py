@@ -12,6 +12,7 @@ import datetime
 import os,pytz,random,json
 from process.tasks import process_data
 from process.models import CarRecord
+from process.json_handler import generate_option
 
 
 duration = 10
@@ -79,5 +80,27 @@ def query_area(request):
     for point in point_list:
         minX, maxX, minY, maxY = min(minX, point['lng']), max(maxX, point['lng']), min(minY, point['lat']), max(maxY,point['lat'])
         single_points_list.append([point['lng'], point['lat']])
+    point_info_dict = {}
+    point_info_dict['date_list'] = []
+    point_info_dict['max_num'] = 0
+    point_info_dict['car_num'] = []
+    maxCarNum = 0
+    for h in range(0, 48):
+        t_from = datetime.datetime(2017, 4, 1, 0, 0, 0) + datetime.timedelta(hours=h)
+        t_to = t_from + datetime.timedelta(hours=1)
+        print(t_from.strftime("%Y-%m-%d %H:%M:%S"))
+        record_num = CarRecord.objects.filter(time__range=(t_from, t_to)).filter(latitude__gte=minY).\
+            filter(latitude__lte=maxY).filter(longitude__gte=minX).filter(longitude__lte=maxX).count()
+        maxCarNum = max(maxCarNum, record_num)
+        local_time = t_from
+        local_time_str = local_time.strftime("%Y-%m-%d %H:%M:%S")
+        point_info_dict['date_list'].append(local_time_str)
+        point_info_dict['car_num'].append(record_num)
+        # print(triple)
+    point_info_dict['max_num'] = maxCarNum
     print("yes")
+    json_file_name = 'option_model_tmp.json'
+    generate_option(json_file_name,"line",**point_info_dict)
+    addr = '/static/option/' + json_file_name
+    return success_response(addr)
 

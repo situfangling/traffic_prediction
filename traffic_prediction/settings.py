@@ -126,7 +126,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True # 不想管时区问题的话，置为False即可
+USE_TZ = False # 不想管时区问题的话，置为False即可
 
 
 # Static files (CSS, JavaScript, Images)
