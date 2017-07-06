@@ -112,7 +112,7 @@ def process(path_pkl_path):
             csv_path = os.path.join(file_dir, csv_name.strip())   ##刚刚报错了，原因是路径末尾出现了\n符号，读取的csv_name末尾含有\n，需要调用strip函数去掉\n
             print(csv_path)
             num += 1
-            if(num > 10):
+            if(num > 500):
                 break
             dbSingleFile(roadset, csv_path, car_id)
 
