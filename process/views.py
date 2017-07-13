@@ -7,14 +7,17 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from process.helpers import pinyin_hash,region_hash2,week_hash,ajax_required,success_response
 from process.data_process import process
-from traffic_prediction.settings import  BASE_DIR
+from traffic_prediction.settings import  BASE_DIR, STATICFILES_DIRS
 import datetime
 import os,pytz,random
 from process.tasks import process_data
 from process.models import CarRecord
+import json
+
 
 duration = 10
 RESULT = "result.txt"
+line_chart_file = os.path.join(STATICFILES_DIRS, 'data', "data.js")
 
 tz_utc_8 = datetime.timezone(datetime.timedelta(hours=8)) # 创建时区UTC+8:00,防止构造datetime类时出现warning(强迫症添加)
 
@@ -67,3 +70,27 @@ def query_status(request):
                 region_car_num = color * 600
                 region_color_dict["des"+str(region_id)] = region + u"<br/> 实时流量: " + str(region_car_num)
     return  success_response(**region_color_dict)
+
+def line_chart(request):
+    time_flow_dict = {}
+    return_dict = {}
+    time_list = []
+    flow_list = []
+    if request.method == 'POST':
+        left_top_longitude = request.POST.get("left_top_longitude", -1)
+        left_top_latitude = request.POST.get("left_top_latitude", -1)
+        right_bottom_longitude = request.POST.get("right_bottom_longitude", -1)
+        right_bottom_latitude = request.POST.get("right_bottom_latitude", -1)
+        for h in range(0, 24):
+            t_from = datetime.datetime(2017, 4, 1, h, 0, 0, tzinfo=tz_utc_8) - datetime.timedelta(hours=8)
+            t_to = t_from - datetime.timedelta(hours=1)
+            car_num = CarRecord.objects.filter(longitude__range=(left_top_longitude,right_bottom_longitude)).filter(latitude__range=(left_top_latitude,right_bottom_latitude)).filter(time__range=(t_from,t_to)).count()
+            time_list.append(h)
+            flow_list.append(car_num)
+    time_flow_dict["time_list"] = time_list
+    time_flow_dict["flow_list"] = flow_list
+    time_flow_str = json.dumps(time_flow_dict)
+    with open(line_chart_file, 'w') as f:
+        json_str = "var data=" + time_flow_str + ";"
+        f.write(json_str)
+    return success_response(**return_dict)
