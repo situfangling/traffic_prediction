@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>echarts</title>
+    <script src="../static/js/echarts3.js"></script>
+</head>
+
+<body>
+    <div id="lineChart" style="width: 1000px; height: 800px;"></div>
+
+    <script type="text/javascript">
+        var lineChart = echarts.init(document.getElementById("lineChart"));
+
+        var option = {
+            title:{
+                text: '折线图'
+            },
+            tooltip:{
+                trigger: 'axis'
+            },
+            legend:{
+                data:['交通数据']
+            },
+            xAxis:{
+                data:['周一','周二','周三','周四','周五','周六','周日']
+            },
+            yAxis:{
+
+            },
+            series:[{
+                name: '交通数据',
+                type: 'line',
+                data: [100, 324, 423, 954, 345, 12, 744]
+            }]
+        };
+
+        lineChart.setOption(option);
+    </script>
+</body>
+</html>

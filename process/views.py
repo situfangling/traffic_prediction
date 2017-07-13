@@ -9,15 +9,17 @@ from process.helpers import pinyin_hash,region_hash2,week_hash,ajax_required,suc
 from process.data_process import process
 from traffic_prediction.settings import  BASE_DIR, STATICFILES_DIRS
 import datetime
-import os,pytz,random
+import os,pytz,random,json
 from process.tasks import process_data
 from process.models import CarRecord
-import json
+from process.json_handler import generate_option
+
 
 
 duration = 10
 RESULT = "result.txt"
-line_chart_file = os.path.join(STATICFILES_DIRS, 'data', "data.js")
+MAXINT = 999999999999
+
 
 tz_utc_8 = datetime.timezone(datetime.timedelta(hours=8)) # 创建时区UTC+8:00,防止构造datetime类时出现warning(强迫症添加)
 
@@ -44,7 +46,7 @@ def data_preprocess(request):
                 local_time = t_from + datetime.timedelta(hours=8)
                 #triple = [local_time.strftime("%Y-%m-%d %H:%M:%S"), count_num, i]
                 #print(triple)
-                out_line_str = local_time.strftime("%Y-%m-%d %H:%M:%S") + "," + str(record_num) + "," + str(i) + '\n'
+                out_line_str = local_time.strftime("%Y-%m-%d %H:%M:%S") + "," + str(record_num) + "," + str(region_id) + '\n'
                 file_object.writelines(out_line_str)
     print("finish")
     file_object.close()  ##忘了最后close这个文件，要细心
@@ -71,26 +73,36 @@ def query_status(request):
                 region_color_dict["des"+str(region_id)] = region + u"<br/> 实时流量: " + str(region_car_num)
     return  success_response(**region_color_dict)
 
-def line_chart(request):
-    time_flow_dict = {}
-    return_dict = {}
-    time_list = []
-    flow_list = []
-    if request.method == 'POST':
-        left_top_longitude = request.POST.get("left_top_longitude", -1)
-        left_top_latitude = request.POST.get("left_top_latitude", -1)
-        right_bottom_longitude = request.POST.get("right_bottom_longitude", -1)
-        right_bottom_latitude = request.POST.get("right_bottom_latitude", -1)
-        for h in range(0, 24):
-            t_from = datetime.datetime(2017, 4, 1, h, 0, 0, tzinfo=tz_utc_8) - datetime.timedelta(hours=8)
-            t_to = t_from - datetime.timedelta(hours=1)
-            car_num = CarRecord.objects.filter(longitude__range=(left_top_longitude,right_bottom_longitude)).filter(latitude__range=(left_top_latitude,right_bottom_latitude)).filter(time__range=(t_from,t_to)).count()
-            time_list.append(h)
-            flow_list.append(car_num)
-    time_flow_dict["time_list"] = time_list
-    time_flow_dict["flow_list"] = flow_list
-    time_flow_str = json.dumps(time_flow_dict)
-    with open(line_chart_file, 'w') as f:
-        json_str = "var data=" + time_flow_str + ";"
-        f.write(json_str)
-    return success_response(**return_dict)
+@ajax_required
+def query_area(request):
+    point_list_tmp = request.POST.get('point_list','')
+    point_list = json.loads(point_list_tmp)
+    single_points_list = []
+    minX, maxX, minY, maxY = MAXINT, 0, MAXINT, 0
+    for point in point_list:
+        minX, maxX, minY, maxY = min(minX, point['lng']), max(maxX, point['lng']), min(minY, point['lat']), max(maxY,point['lat'])
+        single_points_list.append([point['lng'], point['lat']])
+    point_info_dict = {}
+    point_info_dict['date_list'] = []
+    point_info_dict['max_num'] = 0
+    point_info_dict['car_num'] = []
+    maxCarNum = 0
+    for h in range(0, 48):
+        t_from = datetime.datetime(2017, 4, 1, 0, 0, 0) + datetime.timedelta(hours=h)
+        t_to = t_from + datetime.timedelta(hours=1)
+        print(t_from.strftime("%Y-%m-%d %H:%M:%S"))
+        record_num = CarRecord.objects.filter(time__range=(t_from, t_to)).filter(latitude__gte=minY).\
+            filter(latitude__lte=maxY).filter(longitude__gte=minX).filter(longitude__lte=maxX).count()
+        maxCarNum = max(maxCarNum, record_num)
+        local_time = t_from
+        local_time_str = local_time.strftime("%Y-%m-%d %H:%M:%S")
+        point_info_dict['date_list'].append(local_time_str)
+        point_info_dict['car_num'].append(record_num)
+        # print(triple)
+    point_info_dict['max_num'] = maxCarNum
+    print("yes")
+    json_file_name = 'option_model_tmp.json'
+    generate_option(json_file_name,"line",**point_info_dict)
+    addr = '/static/option/' + json_file_name
+    return success_response(addr)
+

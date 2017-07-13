@@ -78,7 +78,7 @@ def dbSingleFile(roadset, source_name, car_id):
                 hour = int(row[time_index])//3600
                 minute = (int(row[time_index])%3600)//60
                 second = int(row[time_index])%60
-                date_time = datetime.datetime(year=2017,month=4,day=1,hour=hour,minute=minute ,second=second,tzinfo=tz_utc_8) ##不加tzinfo会warning,但不是错误
+                date_time = datetime.datetime(year=2017,month=4,day=1,hour=hour,minute=minute ,second=second) ##不加tzinfo会warning,但不是错误
 
                 lon = float(row[lon_index])
                 lat = float(row[lat_index])
@@ -112,7 +112,7 @@ def process(path_pkl_path):
             csv_path = os.path.join(file_dir, csv_name.strip())   ##刚刚报错了，原因是路径末尾出现了\n符号，读取的csv_name末尾含有\n，需要调用strip函数去掉\n
             print(csv_path)
             num += 1
-            if(num > 50):
+            if(num > 500):
                 break
             dbSingleFile(roadset, csv_path, car_id)
 
